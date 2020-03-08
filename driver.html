@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>driver</title>
+    <style>
+        #map {
+                height: 100%;
+            }
+
+            html, body {
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+            #over_map {
+                position: absolute;
+                top: 10px;
+                left: 89%;
+                z-index: 99;
+                background-color: #ccffcc;
+                padding: 10px;
+            }
+    </style>
+</head>
+<body>
+    <div id='map'></div>
+    <div id="over_map">
+        <div>
+            <button id='create'>Start</button>
+            <button id='delete'>Quit</button>
+        </div>
+    </div>
+    
+    <!-- CDNs -->
+        <!-- jQuery CDN -->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+        <!-- The core Firebase JS SDK is always required and must be listed first -->
+     <script src="https://www.gstatic.com/firebasejs/7.9.1/firebase-app.js"></script>
+
+
+     <!-- TODO: Add SDKs for Firebase products that you want to use
+     https://firebase.google.com/docs/web/setup#available-libraries -->
+     <script src="https://www.gstatic.com/firebasejs/7.9.1/firebase-analytics.js"></script>
+     <script src="https://www.gstatic.com/firebasejs/7.9.1/firebase-auth.js"></script>
+     <script src="https://www.gstatic.com/firebasejs/7.9.1/firebase-database.js"></script>
+
+    <script>
+        // Your web app's Firebase configuration
+        var firebaseConfig = {
+          apiKey: "AIzaSyA-jdRvyhqlhbcxsaz3zcrgKtL1fcVZIhQ",
+          authDomain: "uber-b9c57.firebaseapp.com",
+          databaseURL: "https://uber-b9c57.firebaseio.com",
+          projectId: "uber-b9c57",
+          storageBucket: "uber-b9c57.appspot.com",
+          messagingSenderId: "722583761308",
+          appId: "1:722583761308:web:96134367e6bc89a8785859",
+          measurementId: "G-QR5TZBL0P5"
+        };
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        firebase.analytics();
+      </script>
+      
+    <script>
+        function initMap(){ // Google Map Initialization... 
+                map = new google.maps.Map(document.getElementById('map'), {
+                    zoom: 16,
+                    center: new google.maps.LatLng(22.588598, 88.378708)
+                });
+                var marker=new google.maps.Marker({map,position:{lat:22.588598,lng:88.378708}});
+
+        document.getElementById("create").addEventListener("click",create);
+
+        function create(){
+        if('geolocation' in navigator){
+            var options={enableHighAccuracy:true,
+                               timeout:100};
+            navigator.geolocation.getCurrentPosition(createPos,error,options);
+            navigator.geolocation.watchPosition(sendPos,error,options);
+        }
+        }
+        function error(err){
+                console.log(err);
+            }
+        
+            var driver_id;
+        function createPos(position){
+            var uid=firebase.database().ref().child('driver').push().key;
+            driver_id=uid;
+
+               var lat=position.coords.latitude;
+               var long=position.coords.longitude;
+            //    var angle=position.coords.heading;
+               console.log(lat,long);
+               
+           marker.setPosition({
+            lat:lat,
+            lng:long
+           })
+           map.panTo({
+            lat:lat,
+            lng:long
+           })
+
+               //create position for the first time
+            var data={
+              lat:lat,
+              lng:long
+          }
+          var updates = {};
+          updates['/driver/' + uid]=data;
+          firebase.database().ref().update(updates);
+        }
+            
+        function sendPos(pos){
+           var lat=pos.coords.latitude;
+           var long=pos.coords.longitude;
+           console.log(lat,long);
+
+           marker.setPosition({
+            lat:lat,
+            lng:long
+           })
+           map.panTo({
+            lat:lat,
+            lng:long
+           })
+          //update data in firebase
+          var data={
+              lat:lat,
+              lng:long
+          }
+          var updates={};
+          updates['/driver/' + driver_id]=data;
+          firebase.database().ref().update(updates);
+        }
+
+        document.getElementById("delete").addEventListener("click",deleteDriver);
+
+        function deleteDriver(){
+            firebase.database().ref().child('/driver/' + driver_id).remove();
+        }
+        }
+    </script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC7DtKqWoAtgKFmYtUu-PceyA7bV1Y9NTU&callback=initMap">
+        </script>
+</body>
+</html>
